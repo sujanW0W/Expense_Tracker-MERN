@@ -35,6 +35,8 @@ module.exports = { register, login }
 
 */
 
+/*
+
 //MySQL
 
 const { mysqlConnection } = require("../DB/connectDB")
@@ -110,6 +112,79 @@ const login = async (req, res) => {
             isMatchFunction()
         } else throw err
     })
+}
+
+*/
+
+//Sequelize
+
+const { User } = require("../model/sequelizeModel")
+const { BadRequest, UnAuthorized, NotFound } = require("../errors/")
+
+const bcrypt = require("bcryptjs")
+const jwt = require("jsonwebtoken")
+
+const register = async (req, res) => {
+    const { fullName, email, userName, password } = req.body
+
+    if (!fullName || !email || !userName || !password)
+        throw new BadRequest("Invalid Credentials.")
+
+    //Hash Password
+    const salt = await bcrypt.genSalt(10)
+    const hashedPassword = await bcrypt.hash(password, salt)
+
+    //Insert query into DB
+    const user = await User.create({
+        fullName,
+        email,
+        userName,
+        password: hashedPassword,
+    })
+    // console.log(user.toJSON())
+
+    //For Authorization - Generate Token
+    const token = jwt.sign(
+        { id: user.toJSON().id, fullName, email, userName },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_LIFETIME }
+    )
+    res.status(201).json({ user, token })
+}
+
+const login = async (req, res) => {
+    const { userName, password } = req.body
+
+    if (!userName || !password) throw new BadRequest("Invalid Credentials.")
+
+    //Select query
+    const user = await User.findOne({ where: { userName } })
+    //Check if user exists.
+    if (!user) throw new NotFound(`${userName} Not Found.`)
+
+    // console.log(JSON.parse(JSON.stringify(user)))
+    userObject = JSON.parse(JSON.stringify(user))
+
+    //Authenticate User - Verify password
+    const isMatch = await bcrypt.compare(password, userObject.password)
+
+    if (!isMatch) {
+        throw new UnAuthorized("Incorrect Password. Try Again.")
+    }
+
+    //For Authorization - Generate Token
+    const token = jwt.sign(
+        {
+            id: userObject.id,
+            userName,
+            email: userObject.email,
+            fullName: userObject.fullName,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_LIFETIME }
+    )
+
+    res.status(200).json({ msg: "Login Successful.", token })
 }
 
 module.exports = { register, login }

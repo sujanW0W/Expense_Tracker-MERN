@@ -7,6 +7,7 @@
 // module.exports = connectDB
 
 const mysql = require("mysql")
+const { Sequelize } = require("sequelize")
 
 const mysqlConnection = mysql.createConnection({
     host: "localhost",
@@ -31,4 +32,15 @@ const createDB = () => {
     })
 }
 
-module.exports = { mysqlConnection, connectDB, createDB }
+//Sequelize
+const sequelize = new Sequelize(
+    "expense_tracker_SequelizeTest",
+    "root",
+    "hello_world",
+    {
+        host: "localhost",
+        dialect: "mysql",
+    }
+)
+
+module.exports = { mysqlConnection, connectDB, createDB, sequelize }

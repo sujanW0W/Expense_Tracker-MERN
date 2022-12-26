@@ -73,6 +73,8 @@ module.exports = {
 
 */
 
+/*
+
 //MySQL
 
 const { mysqlConnection } = require("../DB/connectDB")
@@ -216,6 +218,71 @@ const deleteTransaction = (req, res) => {
             })
         } else throw err
     })
+}
+
+*/
+
+//Sequelize
+
+const jwt = require("jsonwebtoken")
+const { Expense } = require("../model/sequelizeModel")
+const { BadRequest, NotFound } = require("../errors/")
+
+const getAllTransactions = async (req, res) => {
+    const expenses = await Expense.findAll()
+
+    if (expenses.length === 0) throw new NotFound("No Expenses.")
+
+    res.status(200).json(expenses)
+}
+
+const createTransaction = async (req, res) => {
+    const { name, amount, date } = req.body
+    const { id: createdBy } = req.users
+
+    if (!name || !amount || !date) throw new BadRequest("Enter data properly.")
+
+    const expense = await Expense.create({ name, amount, date, createdBy })
+
+    res.status(201).json(expense)
+}
+
+const getTransaction = async (req, res) => {
+    const { id: expenseID } = req.params
+
+    const expense = await Expense.findByPk(expenseID)
+
+    if (!expense) throw new NotFound(`Expense with id: ${expenseID} Not Found.`)
+
+    res.status(200).json(expense)
+}
+
+const updateTransaction = async (req, res) => {
+    const { id: expenseID } = req.params
+
+    const expense = await Expense.findByPk(expenseID)
+
+    if (!expense) throw new NotFound(`Expense with id: ${expenseID} Not Found.`)
+
+    const updatedExpense = await Expense.update(req.body, {
+        where: {
+            id: expenseID,
+        },
+    })
+
+    res.status(200).json({ msg: "Update Successful.", updatedExpense })
+}
+
+const deleteTransaction = async (req, res) => {
+    const { id: expenseID } = req.params
+
+    const expense = await Expense.findByPk(expenseID)
+
+    if (!expense) throw new NotFound(`Expense with id: ${expenseID} Not Found.`)
+
+    const deletedExpense = await Expense.destroy({ where: { id: expenseID } })
+
+    res.status(200).json({ msg: "Delete Successful.", deletedExpense })
 }
 
 module.exports = {
