@@ -2,7 +2,7 @@
 
 Node & Express Application using MySQL.
 
-I have developed CRUD operations using MySQL, and MongoDB also. The codes for MongoDB is commented out.
+I have developed CRUD operations using MySQL, and MongoDB also.
 
 Update: Performed All the operations using ORM (Sequelize) for MySQL.
 
